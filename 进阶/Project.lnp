@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"main.obj" 
+TO "Project" 
+RAMSIZE(256) 

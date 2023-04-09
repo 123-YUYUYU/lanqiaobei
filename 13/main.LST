@@ -1,0 +1,342 @@
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "onewire.h"
+   2          #include "ds1302.h"
+   3          
+   4          unsigned char code duanma[20] = {0xc0,0xf9,
+   5          0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xbf,0xc1};
+   6          
+   7          unsigned char WRITE[7] = {0x80,0x82,0x84,0x86,0x88,0x8a,0x8c};
+   8          unsigned char READ[7] = {0x81,0x83,0x85,0x87,0x89,0x8b,0x8d};
+   9          unsigned char TIME[7] = {0x28,0x59,0x23};
+  10          unsigned char state = 1;
+  11          unsigned char mode = 0;
+  12          unsigned int T = 23;
+  13          unsigned int SMG_ds18b20 = 0;
+  14          unsigned int L1_time = 0;
+  15          unsigned char L_state = 0xff;
+  16          unsigned int count_5 = 0;
+  17          
+  18          float temp_ds18b20 = 0;
+  19          
+  20          sbit C1 = P3^2;
+  21          sbit C2 = P3^3;
+  22          
+  23          sbit R1 = P3^4;
+  24          sbit R2 = P3^5;
+  25          
+  26          
+  27          void Delay(unsigned int t)
+  28          {
+  29   1              while(t--);
+  30   1      }
+  31          void SelectHC573(unsigned char channel,unsigned char dat)
+  32          {
+  33   1              P0 = dat;
+  34   1              switch(channel)
+  35   1              {
+  36   2                      case 4:P2 = (P2 & 0x1f) | 0x80;break;
+  37   2                      case 5:P2 = (P2 & 0x1f) | 0xa0;break;
+  38   2                      case 6:P2 = (P2 & 0x1f) | 0xc0;break;
+  39   2                      case 7:P2 = (P2 & 0x1f) | 0xe0;break;
+  40   2                      case 0:P2 = (P2 & 0x1f) | 0x00;break;   
+  41   2              }
+  42   1              P2 = (P2 & 0x1f) | 0x00;
+  43   1      }
+  44          
+  45          void DisplaySMG(unsigned char pos,unsigned char dat)
+  46          {
+  47   1              SelectHC573(6,0x01 << pos);
+  48   1              SelectHC573(7,dat);
+  49   1              Delay(500);
+  50   1              SelectHC573(6,0x01 << pos);
+  51   1              SelectHC573(7,0xff);            
+  52   1      }
+  53          
+  54          void Display()
+  55          {
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 2   
+
+  56   1              switch(state)
+  57   1              {
+  58   2                      case 1:
+  59   2                      DisplaySMG(0,duanma[11]);
+  60   2                      DisplaySMG(1,duanma[1]);
+  61   2                      DisplaySMG(5,duanma[SMG_ds18b20/100]) ;
+  62   2                      DisplaySMG(6,duanma[(SMG_ds18b20/10)%10] & 0x7f) ;
+  63   2                      DisplaySMG(7,duanma[SMG_ds18b20%10]) ;
+  64   2      
+  65   2                      break;
+  66   2                      case 2:
+  67   2                      DisplaySMG(0,duanma[11]);
+  68   2                      DisplaySMG(1,duanma[2]);
+  69   2                      DisplaySMG(3,duanma[TIME[2]/16]);
+  70   2                      DisplaySMG(4,duanma[TIME[2]%16]);
+  71   2                      DisplaySMG(5,duanma[10]);
+  72   2                      DisplaySMG(6,duanma[TIME[1]/16]);
+  73   2                      DisplaySMG(7,duanma[TIME[1]%16]);
+  74   2                      break;
+  75   2                      case 3:
+  76   2                      DisplaySMG(0,duanma[11]);
+  77   2                      DisplaySMG(1,duanma[3]);
+  78   2      
+  79   2                      DisplaySMG(6,duanma[T/10]);
+  80   2                      DisplaySMG(7,duanma[T%10]);
+  81   2                      break;
+  82   2                      case 4:
+  83   2                      DisplaySMG(0,duanma[11]);
+  84   2                      DisplaySMG(1,duanma[2]);
+  85   2                      DisplaySMG(3,duanma[TIME[1]/16]);
+  86   2                      DisplaySMG(4,duanma[TIME[1]%16]);
+  87   2                      DisplaySMG(5,duanma[10]);
+  88   2                      DisplaySMG(6,duanma[TIME[0]/16]);
+  89   2                      DisplaySMG(7,duanma[TIME[0]%16]);
+  90   2                      break;
+  91   2              }
+  92   1      }
+  93          
+  94          void Display_ds18b20()
+  95          {
+  96   1              unsigned int temp;
+  97   1              unsigned char low,high;
+  98   1              init_ds18b20();
+  99   1              Write_DS18B20(0xcc);
+ 100   1              Write_DS18B20(0x44);
+ 101   1              Display();
+ 102   1      
+ 103   1              init_ds18b20();
+ 104   1              Write_DS18B20(0xcc);
+ 105   1              Write_DS18B20(0xbe);
+ 106   1              low = Read_DS18B20();
+ 107   1              high = Read_DS18B20();
+ 108   1              init_ds18b20();
+ 109   1      
+ 110   1              temp = high;
+ 111   1              temp = (temp << 8) | low;
+ 112   1              if((temp & 0xf800)  == 0x0000 )
+ 113   1              {
+ 114   2                      temp_ds18b20 = temp *0.0625;
+ 115   2                      SMG_ds18b20 = temp_ds18b20*10;
+ 116   2                      Display();      
+ 117   2              }
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 3   
+
+ 118   1      }
+ 119          
+ 120          void Write_config()
+ 121          {
+ 122   1              unsigned char i;
+ 123   1              Write_Ds1302_Byte(0x8e,0x00);
+ 124   1              for(i = 0; i < 7; i++)
+ 125   1              {
+ 126   2                      Write_Ds1302_Byte(WRITE[i],TIME[i]);                    
+ 127   2              }
+ 128   1              Write_Ds1302_Byte(0x8e,0x80);
+ 129   1      
+ 130   1      }
+ 131          void Read_ds1302()
+ 132          {
+ 133   1              unsigned char i;
+ 134   1              for(i = 0; i < 7; i++)
+ 135   1              {
+ 136   2                      TIME[i] = Read_Ds1302_Byte(READ[i]);    
+ 137   2              }
+ 138   1              if(TIME[1] == 0 && TIME[0] == 0)
+ 139   1              {
+ 140   2                      L_state &= ~0x01; 
+ 141   2                      SelectHC573(4,L_state);
+ 142   2                      if(mode == 1)
+ 143   2                      {
+ 144   3                              SelectHC573(5,0x10);
+ 145   3                      }
+ 146   2                      L1_time = 1;    
+ 147   2              }       
+ 148   1      }
+ 149          
+ 150          void Time0_Init()
+ 151          {
+ 152   1              TMOD = 0x01;
+ 153   1              TH0 = (0 - 50000)/256;
+ 154   1              TL0 = (0 - 50000)%256;
+ 155   1              ET0 = 1;
+ 156   1              EA = 1;
+ 157   1              TR0 = 1;
+ 158   1      }
+ 159          void Service_Timer0()  interrupt 1
+ 160          {       
+ 161   1              TH0 = (0 - 50000)/256;
+ 162   1              TL0 = (0 - 50000)%256;
+ 163   1              Read_ds1302();
+ 164   1              if(L1_time == 1)
+ 165   1              {
+ 166   2      
+ 167   2                      count_5 ++;
+ 168   2                      if(count_5 == 100)
+ 169   2                      {
+ 170   3                              L_state |= 0x01;
+ 171   3                              SelectHC573(4,L_state);                 
+ 172   3                              SelectHC573(5,0x00);
+ 173   3                              L1_time = 0;
+ 174   3                              count_5 = 0;
+ 175   3                                      
+ 176   3                      }
+ 177   2              }
+ 178   1      
+ 179   1      
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 4   
+
+ 180   1      
+ 181   1      }
+ 182          void key_down()
+ 183          {
+ 184   1              C2 = 0; C1 = R1 = R2 = 1;
+ 185   1              if(R2 == 0)
+ 186   1              {  //S12
+ 187   2                      Delay(200);
+ 188   2                      if(R2 == 0)
+ 189   2                      {
+ 190   3                              while(R2 == 0);
+ 191   3                              state ++;
+ 192   3                              if(state == 4)
+ 193   3                              {
+ 194   4                                      state = 1;
+ 195   4                              }
+ 196   3                      }
+ 197   2              } 
+ 198   1              C1 = 0;C2 = R1 = R2 = 1;
+ 199   1              if(R2 == 0)
+ 200   1              {  //S13
+ 201   2                      Delay(200);
+ 202   2                      {
+ 203   3                              if(R2 == 0)
+ 204   3                              {
+ 205   4                                      if(mode == 0)
+ 206   4                                      {
+ 207   5                                              while(R2 == 0);
+ 208   5                                              mode = 1;
+ 209   5                                      }       
+ 210   4                                      else
+ 211   4                                      {
+ 212   5                                              while(R2 == 0);
+ 213   5                                              mode = 0;
+ 214   5                                      }
+ 215   4                              }
+ 216   3                      }
+ 217   2              }
+ 218   1              C2 = 0; C1 = R1 = R2 = 1;
+ 219   1              if(R1 == 0)
+ 220   1              { //S16
+ 221   2                      Delay(200);
+ 222   2                      if(R1 == 0)
+ 223   2                      {
+ 224   3                              if(state == 3)
+ 225   3                              {
+ 226   4                                      while(R1 == 0);
+ 227   4                                      if(T == 99)
+ 228   4                                      {
+ 229   5                                              T = 99;
+ 230   5                                      }
+ 231   4                                      else 
+ 232   4                                      {
+ 233   5                                              T = T + 1;
+ 234   5                                      }
+ 235   4                              }
+ 236   3      
+ 237   3                      }
+ 238   2              }
+ 239   1              C1 = 0;C2 = R1 = R2 = 1;
+ 240   1              if(R1 == 0)
+ 241   1              {//S17
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 5   
+
+ 242   2                      Delay(200);
+ 243   2                      if(R1 == 0)
+ 244   2                      {
+ 245   3                              if(state == 3)
+ 246   3                              {
+ 247   4                                      while(R1 == 0);
+ 248   4                                      if(T ==10)
+ 249   4                                      {
+ 250   5                                              T = 10;
+ 251   5                                      }
+ 252   4                                      else
+ 253   4                                      {
+ 254   5                                              T = T - 1;
+ 255   5                                      }
+ 256   4                              }
+ 257   3                              if(state == 2)
+ 258   3                              {
+ 259   4                                      while(R1 == 0)
+ 260   4                                      {
+ 261   5                                              state = 4 ;
+ 262   5                                              Display();
+ 263   5                                      }
+ 264   4                                      state = 2;
+ 265   4      
+ 266   4                              }
+ 267   3                      }
+ 268   2              }
+ 269   1                      
+ 270   1      }
+ 271          
+ 272          void Init()
+ 273          {
+ 274   1              SelectHC573(0,0x00);
+ 275   1              SelectHC573(5,0x00);
+ 276   1              SelectHC573(4,0xff);
+ 277   1              Write_config();
+ 278   1              Time0_Init();
+ 279   1      
+ 280   1      }
+ 281          void main()
+ 282          {
+ 283   1              Init();
+ 284   1              while(1)
+ 285   1              {
+ 286   2                      Display_ds18b20();
+ 287   2                      key_down();
+ 288   2                      if(mode == 0)
+ 289   2                      {
+ 290   3                              L_state &= ~0x02;
+ 291   3                              SelectHC573(4,L_state);
+ 292   3                              if(SMG_ds18b20 > T*10)
+ 293   3                              {
+ 294   4                                      SelectHC573(5,0x10);            
+ 295   4                              }
+ 296   3                              else 
+ 297   3                              {
+ 298   4                                      SelectHC573(5,0x00);            
+ 299   4                              }
+ 300   3      
+ 301   3                      }
+ 302   2                      else 
+ 303   2                      {
+C51 COMPILER V9.01   MAIN                                                                  04/06/2023 22:17:49 PAGE 6   
+
+ 304   3                              L_state |= 0x02;
+ 305   3                              SelectHC573(4,L_state);
+ 306   3      
+ 307   3                      }
+ 308   2              }
+ 309   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1079    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     36       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

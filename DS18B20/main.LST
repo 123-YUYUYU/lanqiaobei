@@ -1,0 +1,184 @@
+C51 COMPILER V9.01   MAIN                                                                  04/03/2023 21:40:52 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "onewire.h"
+   3           
+   4          unsigned char code SMG_NoDot[18]={0xc0,0xf9,
+   5              0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,
+   6              0x88,0x80,0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+   7          unsigned char code SMG_Dot[10]={0x40,0x79,
+   8              0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10};
+   9          float temp_ds18b20 = 0;          //实际温度值
+  10          unsigned int smg_ds18b20 = 0;    //数码管显示温度值
+  11          void delay(unsigned int t)
+  12          {
+  13   1              while(t--);
+  14   1      }
+  15           
+  16          void Init_74HC138(unsigned char channel)
+  17          {
+  18   1              switch(channel)
+  19   1              {
+  20   2                      case 4:P2 = (P2 & 0x1f) | 0x80;break;
+  21   2                      case 5:P2 = (P2 & 0x1f) | 0xa0;break;
+  22   2                      case 6:P2 = (P2 & 0x1f) | 0xc0;break;
+  23   2                      case 7:P2 = (P2 & 0x1f) | 0xe0;break;
+  24   2                      case 0:P2 = (P2 & 0x1f) | 0x00;break;
+  25   2              }
+  26   1                      P2 = (P2 & 0x1f) | 0x00;
+  27   1      }
+  28           
+  29          void  SMG_DisplayBit(unsigned char pos,unsigned char dat)
+  30          {
+  31   1              P0 = (0x01 << pos);
+  32   1              Init_74HC138(6);
+  33   1              P0 = dat;
+  34   1              Init_74HC138(7);
+  35   1      }
+  36           
+  37          void SMG_All(unsigned char dat)
+  38          {
+  39   1              P0 = 0xff;
+  40   1              Init_74HC138(6);
+  41   1              P0 = dat;
+  42   1              Init_74HC138(7);
+  43   1      }
+  44           
+  45          void Display()
+  46          {
+  47   1               if(smg_ds18b20>99)
+  48   1           {
+  49   2               SMG_DisplayBit(5,SMG_NoDot[smg_ds18b20 / 100]);        
+  50   2               delay(500);
+  51   2               SMG_DisplayBit(5,0xff);    //消隐
+  52   2           }
+  53   1       
+  54   1               SMG_DisplayBit(6,SMG_Dot[(smg_ds18b20 / 10) % 10]);
+  55   1               delay(200);
+C51 COMPILER V9.01   MAIN                                                                  04/03/2023 21:40:52 PAGE 2   
+
+  56   1               SMG_DisplayBit(6,0xff);
+  57   1               delay(200);
+  58   1               SMG_DisplayBit(7,SMG_NoDot[smg_ds18b20  % 10]);
+  59   1               delay(200);
+  60   1               SMG_DisplayBit(7,0xff);
+  61   1               delay(200);
+  62   1               SMG_All(0xff);
+  63   1               delay(200);
+  64   1      }       
+  65                  
+  66           
+  67          //==============DS18B20温度读出与显示==============
+  68          void Read_Dsiplay_DS18B20()
+  69          {
+  70   1      //  unsigned char LSB,MSB;      
+  71   1      //  unsigned int temp = 0;      
+  72   1      //  
+  73   1      //  init_ds18b20();              //初始化DS18B20
+  74   1      //  Write_DS18B20(0xcc);        //忽略ROM操作
+  75   1      //  Write_DS18B20(0x44);        //启动温度转换
+  76   1      //  Display();
+  77   1      //  init_ds18b20();              //初始化DS18B20
+  78   1      //  Write_DS18B20(0xcc);        //忽略ROM操作
+  79   1      //  Write_DS18B20(0xbe);        //读出内部存储器
+  80   1      //  LSB = Read_DS18B20();        //第0字节：温度低8位
+  81   1      //  MSB = Read_DS18B20();        //第1字节：温度高8位
+  82   1      //  init_ds18b20();              //初始化，停止读取
+  83   1      //  
+  84   1      //  temp = MSB;                  //合成16位温度原始数据
+  85   1      //  temp = (temp << 8) | LSB;
+  86   1      //  if((temp & 0xf800) == 0x0000)    //处理正温度
+  87   1      //  {
+  88   1      //    temp_ds18b20 = temp * 0.0625;  //计算实际温度值
+  89   1      //  }
+  90   1      //  smg_ds18b20 = temp_ds18b20 * 10;
+  91   1      //  Display();
+  92   1      
+  93   1      
+  94   1              unsigned int temp;
+  95   1              unsigned char low,high;
+  96   1              init_ds18b20();
+  97   1              Write_DS18B20(0xcc);;
+  98   1              Write_DS18B20(0x44);
+  99   1              Display();
+ 100   1      
+ 101   1              init_ds18b20();
+ 102   1              Write_DS18B20(0xcc);
+ 103   1              Write_DS18B20(0xbe);
+ 104   1              low = Read_DS18B20();
+ 105   1              high = Read_DS18B20();
+ 106   1              init_ds18b20();
+ 107   1      
+ 108   1              temp = high;
+ 109   1              temp = (temp << 8) | low;
+ 110   1              if((temp & 0xf800)  == 0x0000  )
+ 111   1              {
+ 112   2                      temp_ds18b20 = temp *0.0625;
+ 113   2                      smg_ds18b20 = temp_ds18b20*10;
+ 114   2                      Display();      
+ 115   2                      
+ 116   2              } 
+ 117   1      }
+C51 COMPILER V9.01   MAIN                                                                  04/03/2023 21:40:52 PAGE 3   
+
+ 118           
+ 119          void Init_System()
+ 120          {
+ 121   1              P0 = 0xff;
+ 122   1              Init_74HC138(4);
+ 123   1              P0 = 0x00;
+ 124   1              Init_74HC138(5);
+ 125   1              SMG_All(0xff);
+ 126   1      }
+ 127           
+ 128          void main()
+ 129          {
+ 130   1        Init_System();  
+ 131   1        while(1)
+ 132   1        {
+ 133   2          Read_Dsiplay_DS18B20();
+ 134   2        }
+ 135   1      }
+ 136          
+ 137          
+ 138          
+ 139          
+ 140          
+ 141          
+ 142          
+ 143          
+ 144          
+ 145          
+ 146          
+ 147          
+ 148          
+ 149          
+ 150          
+ 151          
+ 152          
+ 153          
+ 154          
+ 155          
+ 156          
+ 157          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    400    ----
+   CONSTANT SIZE    =     28    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

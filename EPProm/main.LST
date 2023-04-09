@@ -1,0 +1,343 @@
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //#include "stc15f2k60s2.h"
+   2          //#include "iic.h"
+   3          //
+   4          //unsigned char code duanma[18]={0xc0,0xf9,
+   5          //    0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xbf};
+   6          //unsigned char dat1 = 0,dat2 = 0,dat3 = 0;
+   7          //
+   8          //
+   9          //void Delay(unsigned char t)
+  10          //{
+  11          //      while(t--);
+  12          //}
+  13          //
+  14          //void SelectHC573(unsigned char channel,unsigned char dat)
+  15          //{
+  16          //      P0 = dat;
+  17          //      switch(channel)
+  18          //      {
+  19          //              case 4:P2 = (P2 & 0x1f) | 0x80;break;
+  20          //              case 5:P2 = (P2 & 0x1f) | 0xa0;break;
+  21          //              case 6:P2 = (P2 & 0x1f) | 0xc0;break;
+  22          //              case 7:P2 = (P2 & 0x1f) | 0xe0;break;
+  23          //              case 0:P2 = (P2 & 0x1f) | 0x00;break;   
+  24          //      }
+  25          //      P2 = (P2 & 0x1f) | 0x00;
+  26          //}
+  27          //
+  28          //void DisplaySMG(unsigned char pos,unsigned char dat)
+  29          //{
+  30          //      SelectHC573(6,0x01 << pos);
+  31          //      SelectHC573(7,dat);
+  32          //      Delay(500);
+  33          //      SelectHC573(6,0x01 << pos);
+  34          //      SelectHC573(7,0xff);
+  35          //
+  36          //}
+  37          //
+  38          //void DisplaySMG_All(unsigned char value)
+  39          //{
+  40          //  SelectHC573(6, 0xff);    //使能所有数码管
+  41          //  SelectHC573(7, value);  //数码管显示内容  
+  42          //}
+  43          //void Display()
+  44          //{
+  45          //      DisplaySMG(0,duanma[dat1 / 10]);
+  46          //
+  47          //      DisplaySMG(1,duanma[dat1 % 10]);
+  48          //                                                       
+  49          //      DisplaySMG(2,duanma[10]);
+  50          //
+  51          //      DisplaySMG(3,duanma[dat2 / 10]);
+  52          //
+  53          //      DisplaySMG(4,duanma[dat2 % 10]);
+  54          //
+  55          //      DisplaySMG(5,duanma[10]);
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 2   
+
+  56          //
+  57          //      DisplaySMG(6,duanma[dat3 / 10]);
+  58          //
+  59          //      DisplaySMG(7,duanma[dat3 % 10]);
+  60          //
+  61          //}
+  62          //
+  63          //void Write_24C02(unsigned char addr,unsigned char dat)
+  64          //{
+  65          //      IIC_Start();          //起始信号
+  66          //      IIC_SendByte(0xa0);    //EEPROM的写设备地址
+  67          //      IIC_WaitAck();        //等待从机应答
+  68          //      IIC_SendByte(addr);    //内存单元地址
+  69          //      IIC_WaitAck();        //等待从机应答
+  70          //      IIC_SendByte(dat);    //内存写入数据
+  71          //      IIC_WaitAck();        //等待从机应答
+  72          //      IIC_Stop();            //停止信号
+  73          //      
+  74          //}
+  75          //
+  76          //unsigned char Read_24C02(unsigned char addr)
+  77          //{
+  78          //        unsigned char tmp;
+  79          //        //首先，进行一个伪写操作
+  80          //        IIC_Start();          //起始信号
+  81          //        IIC_SendByte(0xa0);    //EEPROM的写设备地址
+  82          //        IIC_WaitAck();        //等待从机应答
+  83          //        IIC_SendByte(addr);    //内存单元地址
+  84          //        IIC_WaitAck();        //等待从机应答
+  85          //        //然后，开始字节读操作
+  86          //        IIC_Start();          //起始信号
+  87          //        IIC_SendByte(0xa1);    //EEPROM的读设备地址
+  88          //        IIC_WaitAck();        //等待从机应答
+  89          //        tmp = IIC_RecByte();  //读取内存中的数据
+  90          //        IIC_SendAck(1);        //产生非应答信号
+  91          //        IIC_Stop();            //停止信号
+  92          //        return tmp;
+  93          //
+  94          //}
+  95          //void Read_Write_24C02()
+  96          //{
+  97          ////  if(Read_24C02(0x21) != 4)
+  98          ////  {
+  99          ////    Write_24C02(0x21,4);
+ 100          ////    Delay(6000); 
+ 101          ////    Write_24C02(0x01,0);
+ 102          ////    Delay(6000); 
+ 103          ////    Write_24C02(0x03,0);
+ 104          ////    Delay(6000); 
+ 105          ////    Write_24C02(0x05,0);
+ 106          ////    Delay(6000);
+ 107          ////  }
+ 108          //  dat1 = Read_24C02(0x01);  //从24C02读取dat1
+ 109          //  dat2 = Read_24C02(0x03);  //从24C02读取dat2
+ 110          //  dat3 = Read_24C02(0x05);  //从24C02读取dat3
+ 111          //  
+ 112          //  dat1 = dat1 + 1;          //第1个计数变量+1
+ 113          //  dat2 = dat2 + 2;          //第2个计数变量+2
+ 114          //  dat3 = dat3 + 3;          //第3个计数变量+3
+ 115          //  if(dat1 > 10)
+ 116          //    dat1 = 0;
+ 117          //  if(dat2 > 20)
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 3   
+
+ 118          //    dat2 = 0;
+ 119          //  if(dat3 > 30)
+ 120          //    dat3 = 0;
+ 121          //  
+ 122          //  Write_24C02(0x01, dat1);
+ 123          //  Delay(6000);            //等待字节写入完成
+ 124          //  Write_24C02(0x03, dat2);
+ 125          //  Delay(6000);            //等待时间不够会影响dat3写入
+ 126          //  Write_24C02(0x05, dat3);
+ 127          //  Delay(6000);
+ 128          //}
+ 129          //                                                 
+ 130          //void Init()
+ 131          //{
+ 132          //      SelectHC573(0,0x00);
+ 133          //      SelectHC573(5,0x00);
+ 134          //      SelectHC573(4,0xff);
+ 135          //      DisplaySMG_All(0xff);
+ 136          //      
+ 137          //}
+ 138          //void main()
+ 139          //{     
+ 140          //      Init();
+ 141          //      Read_Write_24C02();
+ 142          //      while(1)
+ 143          //      {
+ 144          //              Display();      
+ 145          //      }
+ 146          //
+ 147          //}
+ 148          
+ 149          /*==================蓝桥杯单片机特训==================
+ 150          【进阶03】：24C02的基本读写操作
+ 151          **平  台：CT107D单片机综合实训平台
+ 152          **模  式：IO模式
+ 153          **底层驱动文件：2022年竞赛资源数据包提供的文件
+ 154          **设  计：欧浩源（小蜜蜂老师，ohy3686@qq.com）
+ 155          **时  间：2022-04-01
+ 156          **更多详见：www.xmf393.com
+ 157          ====================================================*/
+ 158          #include "stc15f2k60s2.h"
+ 159          #include "iic.h"
+ 160          
+ 161          //定义动态显示中单个数码管点亮时长
+ 162          #define TSMG  500
+ 163          //-------共阳数码管的段码编码表（无小数点）--------
+ 164          //0 1 2 3 4 5 6 7 8 9 A b C D E F - .
+ 165          unsigned char code SMG_NoDot[18]={0xc0,0xf9,
+ 166              0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,
+ 167              0x88,0x83,0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+ 168          //-----------------------------------------------
+ 169          //定义3个计数变量
+ 170          unsigned char dat1 = 0, dat2 = 0, dat3 = 0;
+ 171          //==============数码管动态显示专用延时函数=============
+ 172          void DelaySMG(unsigned int t)
+ 173          {
+ 174   1        while(t--);
+ 175   1      }
+ 176          //==================设置选通的锁存器===================
+ 177          void Set_HC573(unsigned char channel, unsigned char dat)
+ 178          {
+ 179   1        P0 = dat;                      //待设置数据
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 4   
+
+ 180   1        switch(channel)                //选通锁存器
+ 181   1        {
+ 182   2          case 4:
+ 183   2            P2 = (P2 & 0x1f) | 0x80;  //Y4输出0，LED控制
+ 184   2          break;
+ 185   2          case 5:
+ 186   2            P2 = (P2 & 0x1f) | 0xa0;  //Y5输出0，蜂鸣器和继电器控制
+ 187   2          break;
+ 188   2          case 6:
+ 189   2            P2 = (P2 & 0x1f) | 0xc0;  //Y6输出0，数码管位选
+ 190   2          break;
+ 191   2          case 7:
+ 192   2            P2 = (P2 & 0x1f) | 0xe0;  //Y7输出0，数码管段码
+ 193   2          break;
+ 194   2          case 0:
+ 195   2            P2 = (P2 & 0x1f) | 0x00;  //所有锁存器不选择
+ 196   2          break;
+ 197   2        }
+ 198   1        P2 = (P2 & 0x1f) | 0x00;      //设置完成，关闭全部锁存器
+ 199   1      }
+ 200          //=================单个数码管动态显示=================
+ 201          void DisplaySMG_Bit(unsigned char pos, unsigned char value)
+ 202          {
+ 203   1        Set_HC573(6, 0x01 << pos);    //数码管的段位
+ 204   1        Set_HC573(7, value);          //数码管显示内容
+ 205   1        DelaySMG(TSMG);                //数码管点亮时长
+ 206   1        Set_HC573(6, 0x01 << pos);        
+ 207   1        Set_HC573(7, 0xff);            //消隐
+ 208   1      }
+ 209          //=================全部数码管静态显示=================
+ 210          void DisplaySMG_All(unsigned char value)
+ 211          {
+ 212   1        Set_HC573(6, 0xff);    //使能所有数码管
+ 213   1        Set_HC573(7, value);  //数码管显示内容  
+ 214   1      }
+ 215          //===================读取值显示函数===================
+ 216          void DisplaySMG_24C02()
+ 217          {
+ 218   1        //数码管右起第0位
+ 219   1        DisplaySMG_Bit(7,SMG_NoDot[dat3  % 10]);
+ 220   1        //数码管右起第1位
+ 221   1        DisplaySMG_Bit(6,SMG_NoDot[dat3 / 10]);    
+ 222   1        //数码管右起第2位
+ 223   1        DisplaySMG_Bit(5,SMG_NoDot[16]);        
+ 224   1        
+ 225   1        //数码管右起第3位
+ 226   1        DisplaySMG_Bit(4,SMG_NoDot[dat2  % 10]);
+ 227   1        //数码管右起第4位
+ 228   1        DisplaySMG_Bit(3,SMG_NoDot[dat2 / 10]);    
+ 229   1        //数码管右起第5位
+ 230   1        DisplaySMG_Bit(2,SMG_NoDot[16]);        
+ 231   1        
+ 232   1        //数码管右起第6位
+ 233   1        DisplaySMG_Bit(1,SMG_NoDot[dat1 % 10]);        
+ 234   1        //数码管右起第7位
+ 235   1        DisplaySMG_Bit(0,SMG_NoDot[dat1 / 10]);        
+ 236   1      }
+ 237          //================24C02单字节写入=================
+ 238          void Write_24C02(unsigned char addr, unsigned char dat)
+ 239          {
+ 240   1        IIC_Start();          //起始信号
+ 241   1        IIC_SendByte(0xa0);    //EEPROM的写设备地址
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 5   
+
+ 242   1        IIC_WaitAck();        //等待从机应答
+ 243   1        IIC_SendByte(addr);    //内存单元地址
+ 244   1        IIC_WaitAck();        //等待从机应答
+ 245   1        IIC_SendByte(dat);    //内存写入数据
+ 246   1        IIC_WaitAck();        //等待从机应答
+ 247   1        IIC_Stop();            //停止信号
+ 248   1      }
+ 249          //================24C02单字节读取=================
+ 250          unsigned char Read_24C02(unsigned char addr)
+ 251          {
+ 252   1        unsigned char tmp;
+ 253   1        //首先，进行一个伪写操作
+ 254   1        IIC_Start();          //起始信号
+ 255   1        IIC_SendByte(0xa0);    //EEPROM的写设备地址
+ 256   1        IIC_WaitAck();        //等待从机应答
+ 257   1        IIC_SendByte(addr);    //内存单元地址
+ 258   1        IIC_WaitAck();        //等待从机应答
+ 259   1        //然后，开始字节读操作
+ 260   1        IIC_Start();          //起始信号
+ 261   1        IIC_SendByte(0xa1);    //EEPROM的读设备地址
+ 262   1        IIC_WaitAck();        //等待从机应答
+ 263   1        tmp = IIC_RecByte();  //读取内存中的数据
+ 264   1        IIC_SendAck(1);        //产生非应答信号
+ 265   1        IIC_Stop();            //停止信号
+ 266   1        return tmp;
+ 267   1      }
+ 268          //==============24C02数据读取与写入===============
+ 269          void Read_Write_24C02()
+ 270          {
+ 271   1        dat1 = Read_24C02(0x01);  //从24C02读取dat1
+ 272   1        dat2 = Read_24C02(0x03);  //从24C02读取dat2
+ 273   1        dat3 = Read_24C02(0x05);  //从24C02读取dat3
+ 274   1        
+ 275   1        dat1 = dat1 + 1;          //第1个计数变量+1
+ 276   1        dat2 = dat2 + 2;          //第2个计数变量+2
+ 277   1        dat3 = dat3 + 3;          //第3个计数变量+3
+ 278   1        if(dat1 > 10)
+ 279   1          dat1 = 0;
+ 280   1        if(dat2 > 20)
+ 281   1          dat2 = 0;
+ 282   1        if(dat3 > 30)                   
+ 283   1          dat3 = 0;
+ 284   1        
+ 285   1        Write_24C02(0x01, dat1);
+ 286   1        DelaySMG(6000);            //等待字节写入完成
+ 287   1        Write_24C02(0x03, dat2);
+ 288   1        DelaySMG(6000);            //等待时间不够会影响dat3写入
+ 289   1        Write_24C02(0x05, dat3);
+ 290   1        DelaySMG(6000);
+ 291   1      }
+ 292          //===================系统初始化===================
+ 293          void Init_sys()
+ 294          {
+ 295   1        Set_HC573(0, 0x00);        //关闭所有锁存器
+ 296   1        Set_HC573(5, 0x00);        //关闭蜂鸣器和继电器
+ 297   1        Set_HC573(4, 0xff);        //关闭全部LED灯
+ 298   1        DisplaySMG_All(0xff);      //关闭全部数码管
+ 299   1      }
+ 300          //=======================主函数=======================
+ 301          void main()
+ 302          {
+ 303   1        Init_sys();                //系统初始化
+C51 COMPILER V9.01   MAIN                                                                  04/04/2023 20:04:53 PAGE 6   
+
+ 304   1        Read_Write_24C02();        //读写24C02的三个单元的数据
+ 305   1        while(1)
+ 306   1        {
+ 307   2          DisplaySMG_24C02();      //循环动态刷新数码管
+ 308   2        }
+ 309   1      }
+ 310          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    475    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

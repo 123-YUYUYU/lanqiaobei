@@ -1,0 +1,289 @@
+C51 COMPILER V9.01   MAIN                                                                  04/05/2023 15:32:35 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "iic.h"
+   2          
+   3          unsigned char key_mutil = 0;
+   4          unsigned char state = 1;
+   5          unsigned char adc_value = 0; 
+   6          unsigned int smg_volt = 0;
+   7          unsigned int smg_Vp = 300;
+   8          float adc_volt = 0;
+   9          unsigned int count = 0;
+  10          unsigned int error = 0;
+  11          unsigned int dat_24c02 = 0;
+  12          
+  13          unsigned char code duanma[16] = {0xc0,0xf9,
+  14          0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xc1,0x8c,0xc8};
+  15          //10000011
+  16          
+  17          
+  18          sbit R1 = P3^2;
+  19          sbit R2 = P3^3;
+  20          
+  21          sbit C1 = P3^5;
+  22          sbit C2 = P3^4;
+  23          
+  24          void DelaySMG(unsigned int t)
+  25          {
+  26   1              while(t--);
+  27   1      
+  28   1      }
+  29          void SelectHC573(unsigned char channel,unsigned char dat)
+  30          {
+  31   1              P0 = dat;
+  32   1              switch(channel)
+  33   1              {
+  34   2                      case 4:P2 = (P2 & 0x1f) | 0x80;break;
+  35   2                      case 5:P2 = (P2 & 0x1f) | 0xa0;break;
+  36   2                      case 6:P2 = (P2 & 0x1f) | 0xc0;break;
+  37   2                      case 7:P2 = (P2 & 0x1f) | 0xe0;break;
+  38   2                      case 0:P2 = (P2 & 0x1f) | 0x00;break;
+  39   2              }
+  40   1              P2 = (P2 & 0x1f) | 0x00;
+  41   1      }
+  42          void DisplaySMG(unsigned char pos,unsigned char dat)
+  43          {
+  44   1              SelectHC573(6,0x01 << pos);
+  45   1              SelectHC573(7,dat);
+  46   1              DelaySMG(500);
+  47   1              SelectHC573(6,0x01 << pos);
+  48   1              SelectHC573(7,0xff);
+  49   1      }
+  50          
+  51          void Display()
+  52          {
+  53   1              switch(state)
+  54   1              {
+  55   2                      case 1:
+C51 COMPILER V9.01   MAIN                                                                  04/05/2023 15:32:35 PAGE 2   
+
+  56   2                      DisplaySMG(0,duanma[10]);
+  57   2                      DisplaySMG(5,duanma[smg_volt/100] & 0x7f);
+  58   2                      DisplaySMG(6,duanma[(smg_volt/10)%10]);
+  59   2                      DisplaySMG(7,duanma[smg_volt%10]); 
+  60   2                      break;
+  61   2                      
+  62   2                      case 2:
+  63   2                      DisplaySMG(0,duanma[11]);
+  64   2                      DisplaySMG(5,duanma[smg_Vp/100] & 0x7f);
+  65   2                      DisplaySMG(6,duanma[(smg_Vp/10)%10]);
+  66   2                      DisplaySMG(7,duanma[smg_Vp%10]);
+  67   2                      break;
+  68   2                      
+  69   2                      case 3:
+  70   2                      DisplaySMG(0,duanma[12]);
+  71   2                      DisplaySMG(6,duanma[count/10]);
+  72   2                      DisplaySMG(7,duanma[count%10]);
+  73   2      
+  74   2      
+  75   2                      break;  
+  76   2              }
+  77   1      
+  78   1      }
+  79          
+  80          
+  81          void Write_24C02(unsigned char addr,unsigned char dat )
+  82          {
+  83   1              IIC_Start();
+  84   1              IIC_WaitAck();
+  85   1              IIC_SendByte(0xa0);
+  86   1              IIC_WaitAck();
+  87   1              IIC_SendByte(addr);
+  88   1              IIC_WaitAck();
+  89   1              IIC_SendByte(dat);
+  90   1              IIC_WaitAck();
+  91   1              IIC_Stop();
+  92   1      }
+  93          
+  94          
+  95          unsigned char Read_24C02(unsigned char addr)
+  96          {
+  97   1              unsigned char tmp;
+  98   1              IIC_Start();
+  99   1              IIC_SendByte(0xa0);
+ 100   1              IIC_WaitAck();
+ 101   1              IIC_SendByte(addr);
+ 102   1              IIC_WaitAck();
+ 103   1      
+ 104   1              IIC_Start();
+ 105   1              IIC_WaitAck();
+ 106   1              IIC_SendByte(0xa1);
+ 107   1              IIC_WaitAck();
+ 108   1              tmp = IIC_RecByte();
+ 109   1              IIC_SendAck(1);
+ 110   1              IIC_Stop();
+ 111   1              return tmp;
+ 112   1      }
+ 113          
+ 114          unsigned char Read_PCF8591_AIN3()
+ 115          {
+ 116   1              unsigned char tmp;
+ 117   1              IIC_Start();
+C51 COMPILER V9.01   MAIN                                                                  04/05/2023 15:32:35 PAGE 3   
+
+ 118   1              IIC_SendByte(0x90);       //PCF8591的写设备地址
+ 119   1              IIC_WaitAck();
+ 120   1      
+ 121   1              IIC_SendByte(0x03);      //选择AIN3通道，可调电阻
+ 122   1              IIC_WaitAck();
+ 123   1              IIC_Stop();
+ 124   1      
+ 125   1              Display();
+ 126   1      
+ 127   1              IIC_Start();
+ 128   1              IIC_SendByte(0x91);     //PCF8591的读设备地址
+ 129   1              IIC_WaitAck();
+ 130   1      
+ 131   1              tmp = IIC_RecByte();
+ 132   1              IIC_SendAck(1);
+ 133   1              IIC_Stop();
+ 134   1              return tmp;
+ 135   1      
+ 136   1      } 
+ 137          void App_Volt()
+ 138          {
+ 139   1              unsigned char i;
+ 140   1              for(i = 0; i < 3; i++)
+ 141   1              {
+ 142   2                      adc_value += Read_PCF8591_AIN3();       
+ 143   2              }
+ 144   1              adc_value = adc_value / 3;
+ 145   1              adc_volt = adc_value * (5.0 / 255);
+ 146   1              smg_volt = adc_volt * 100;
+ 147   1      //      if(smg_volt < smg_Vp )
+ 148   1      }
+ 149          
+ 150          void key_down()
+ 151          {  // sbit R1 = P3^2; sbit R2 = P3^3; sbit C1 = P3^5;sbit C2 = P3^4;
+ 152   1              C1 = 0; C2 = R1 = R2 = 1;
+ 153   1              if(R1 == 0)
+ 154   1              {//S13
+ 155   2              }       DelaySMG(200);
+ 156   1              if(R1 == 0)
+ 157   1              {
+ 158   2                      if(state == 3)
+ 159   2                      {
+ 160   3                              error = 0;
+ 161   3                              while(R1 == 0);
+ 162   3                              count = 0;
+ 163   3                      }
+ 164   2                      else 
+ 165   2                      {
+ 166   3                              error ++;
+ 167   3                      }
+ 168   2              }       
+ 169   1              if(R2 == 0)
+ 170   1              {  //S12
+ 171   2                      DelaySMG(200);  
+ 172   2                      if(R2 == 0)
+ 173   2                      {       while(R2 == 0);
+ 174   3                              state ++;
+ 175   3                              
+ 176   3                              if(state == 4)
+ 177   3                              {
+ 178   4                                      error = 0;
+ 179   4                                      state = 1;
+C51 COMPILER V9.01   MAIN                                                                  04/05/2023 15:32:35 PAGE 4   
+
+ 180   4                              }
+ 181   3                              else if(state == 3)
+ 182   3                              {
+ 183   4                                      dat_24c02 = smg_Vp /10;
+ 184   4                                      Write_24C02(0x00,dat_24c02);
+ 185   4                              }
+ 186   3                      }
+ 187   2              }
+ 188   1              C1 = R1 = R2 = 1; C2 = 0;
+ 189   1              if(R1 == 0)
+ 190   1              {        //S17
+ 191   2                      DelaySMG(200);  
+ 192   2                      if(R1 == 0)
+ 193   2                      {
+ 194   3                              if(state == 2)
+ 195   3                              {
+ 196   4                                      error = 0;
+ 197   4                                      while(R1 == 0);
+ 198   4                                      smg_Vp = smg_Vp - 50 ;
+ 199   4                                      if(smg_Vp == 0)
+ 200   4                                      {
+ 201   5                                              smg_Vp = 500;
+ 202   5                                      }
+ 203   4                              }
+ 204   3                              else 
+ 205   3                              {
+ 206   4                                      error++;
+ 207   4                              }
+ 208   3                      }
+ 209   2              }
+ 210   1                      if(R2 == 0)
+ 211   1                      {        //S16
+ 212   2                              DelaySMG(200);  
+ 213   2                              if(R2 == 0)
+ 214   2                              {
+ 215   3                                      if(state == 2)
+ 216   3                                      {
+ 217   4                                              error = 0;
+ 218   4                                              while(R2 == 0);
+ 219   4                                              smg_Vp = smg_Vp + 50 ;
+ 220   4                                              if(smg_Vp == 500)
+ 221   4                                              {
+ 222   5                                                      smg_Vp = 0;
+ 223   5                                              }
+ 224   4                                      }
+ 225   3                                      else 
+ 226   3                                      {
+ 227   4                                              error ++;
+ 228   4                                      }
+ 229   3                              }
+ 230   2              }
+ 231   1              
+ 232   1      }
+ 233          void Init()
+ 234          {
+ 235   1         SelectHC573(0,0x00);
+ 236   1         SelectHC573(5,0x00);
+ 237   1         SelectHC573(4,0xff);
+ 238   1      
+ 239   1         dat_24c02 = Read_24C02(0x00);
+ 240   1         if(dat_24c02 >50 || dat_24c02 %5 != 0)
+ 241   1         {
+C51 COMPILER V9.01   MAIN                                                                  04/05/2023 15:32:35 PAGE 5   
+
+ 242   2              dat_24c02 = 0;
+ 243   2         }
+ 244   1         smg_Vp = dat_24c02 * 10;
+ 245   1      
+ 246   1      }
+ 247          
+ 248          void main()
+ 249          {
+ 250   1              Init();
+ 251   1              while(1)
+ 252   1              {
+ 253   2                      key_down();
+ 254   2                      App_Volt();
+ 255   2                      Display();
+ 256   2                      DelaySMG(5000); 
+ 257   2              }
+ 258   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    888    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     17       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

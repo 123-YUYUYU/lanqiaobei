@@ -1,0 +1,129 @@
+C51 COMPILER V9.01   MAIN                                                                  03/09/2023 20:26:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <stc15f2k60s2.h>
+   2          
+   3          sbit L1 = P0^0;
+   4          sbit S7 = P3^0;
+   5          void SelectHC573()
+   6          {
+   7   1              P2 = (P2 & 0x1f) | 0x80;
+   8   1      
+   9   1      }
+  10          //***********¶¨Ê±Æ÷********************************
+  11          unsigned char count     =0;
+  12          unsigned char pwm_duty = 0;
+  13          void InitTimer0()
+  14          {
+  15   1              TMOD = 0x01;
+  16   1              TH0 = (25535- 100) / 256;
+  17   1              TL0 = (25535- 100) % 256; 
+  18   1      
+  19   1              ET0 = 1;
+  20   1              EA = 1;
+  21   1      
+  22   1      }
+  23          
+  24          void  ServiceTimer0() interrupt 1
+  25          {
+  26   1              TH0 = (25535- 100) / 256;
+  27   1              TL0 = (25535- 100) % 256;
+  28   1      
+  29   1              count++;
+  30   1              if(count == pwm_duty)
+  31   1              {
+  32   2                      L1 = 1;
+  33   2              }
+  34   1              else if(count == 100)
+  35   1              {       
+  36   2                      L1 = 0;
+  37   2                      count = 0;
+  38   2              }
+  39   1      
+  40   1      }
+  41          //*************************************************
+  42          
+  43          
+  44          
+  45          void Delay(unsigned int t)
+  46          {
+  47   1              while(t--);
+  48   1      }
+  49          
+  50          unsigned char stat = 0;
+  51          void ScanKey()
+  52          {
+  53   1              if(S7 == 0)
+  54   1              {
+  55   2              Delay(100);
+C51 COMPILER V9.01   MAIN                                                                  03/09/2023 20:26:10 PAGE 2   
+
+  56   2              if(S7 == 0)
+  57   2              {
+  58   3                      switch(stat)
+  59   3                      {
+  60   4                              case 0:
+  61   4                                      L1 = 0;
+  62   4                                      TR0 = 1;
+  63   4                                      pwm_duty = 10;
+  64   4                                      stat = 1;
+  65   4                              break;
+  66   4                              case 1:
+  67   4                                      pwm_duty = 50;
+  68   4                                      stat = 2;
+  69   4                              break;
+  70   4                              case 2:
+  71   4                                      pwm_duty = 90;
+  72   4                                      stat = 3;
+  73   4                              break;
+  74   4                              case 3:
+  75   4                                      L1 = 1;
+  76   4                                      TR0 = 0;
+  77   4                                      stat = 0;
+  78   4                              break;
+  79   4      
+  80   4      
+  81   4      
+  82   4                      }
+  83   3                      while(S7 == 0);
+  84   3                              
+  85   3              }}
+  86   1      }
+  87          
+  88          
+  89          
+  90          void main()
+  91          {
+  92   1              SelectHC573();
+  93   1              P2 = 0xff;
+  94   1      
+  95   1              InitTimer0();
+  96   1              while(1)
+  97   1              {       
+  98   2                      SelectHC573();
+  99   2                      L1 = 0;
+ 100   2      
+ 101   2                      ScanKey();
+ 102   2              
+ 103   2              }
+ 104   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    156    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
